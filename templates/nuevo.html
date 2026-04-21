@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuevo Recibo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f8; }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .card-box {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- 🔹 HEADER -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4">
+    <span class="navbar-brand">📦 LMCS</span>
+
+    <div class="ms-4">
+        <a href="/recibos" class="text-decoration-none">Recibos</a>
+        <span class="mx-2">/</span>
+        <span class="fw-bold">Nuevo</span>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <div class="card-box">
+
+        <h3 class="mb-4">Nuevo Recibo</h3>
+
+        <!-- 🔴 ERROR (tipo planta) -->
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST">
+
+            <div class="row g-3">
+
+                <!-- FECHA INGRESO -->
+                <div class="col-md-6">
+                    <label class="form-label">Fecha de Ingreso</label>
+                    <input type="date" name="fecha_ingreso" class="form-control" id="fecha_ingreso" required readonly>
+                </div>
+
+                <!-- FECHA SALIDA -->
+                <div class="col-md-6">
+                    <label class="form-label">Fecha de Salida</label>
+                    <input type="date" name="fecha_salida" class="form-control" required>
+                </div>
+
+                <!-- VALOR -->
+                <div class="col-md-6">
+                    <label class="form-label">Valor Total</label>
+                    <input type="number" name="valor_total" class="form-control" min="0" step="1" required>
+                </div>
+
+                <!-- TELEFONO -->
+                <div class="col-md-6">
+                    <label class="form-label">Teléfono Cliente</label>
+                    <input type="text" name="telefono_cliente" class="form-control" pattern="[0-9]+" required>
+                </div>
+
+                <!-- NOMBRE -->
+                <div class="col-md-6">
+                    <label class="form-label">Nombre Cliente</label>
+                    <input type="text" name="nombre_cliente" class="form-control" required>
+                </div>
+
+                <!-- 🔥 ESTADO FIJO -->
+                <div class="col-md-6">
+                    <label class="form-label">Estado</label>
+                    <input type="text" class="form-control" value="Recibido" disabled>
+                </div>
+
+                <!-- PAQUETE -->
+                <div class="col-12">
+                    <label class="form-label">Paquete</label>
+                    <textarea name="paquete" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="col-12 text-end mt-3">
+                    <a href="/recibos" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- 🔥 VALIDACIÓN JS -->
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+
+    const fechaIngresoInput = document.querySelector("[name=fecha_ingreso]");
+    const fechaSalidaInput = document.querySelector("[name=fecha_salida]");
+    const valorInput = document.querySelector("[name=valor_total]");
+    const telefonoInput = document.querySelector("[name=telefono_cliente]");
+
+    const fechaIngreso = new Date(fechaIngresoInput.value);
+    const fechaSalida = new Date(fechaSalidaInput.value);
+
+    // 🔴 Fecha salida >= ingreso
+    if (fechaSalida < fechaIngreso) {
+        alert("La fecha de salida no puede ser anterior a la de ingreso");
+        e.preventDefault();
+        return;
+    }
+
+    // 🔴 Valor entero
+    if (!Number.isInteger(Number(valorInput.value))) {
+        alert("El valor total debe ser un número entero");
+        e.preventDefault();
+        return;
+    }
+
+    // 🔴 Teléfono solo números
+    if (!/^[0-9]+$/.test(telefonoInput.value)) {
+        alert("El teléfono solo debe contener números");
+        e.preventDefault();
+        return;
+    }
+
+});
+</script>
+
+<!-- 🔥 FECHA AUTOMÁTICA -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+
+    const fechaHoy = `${yyyy}-${mm}-${dd}`;
+
+    document.getElementById("fecha_ingreso").value = fechaHoy;
+});
+</script>
+
+</body>
+</html>

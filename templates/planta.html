@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>LMCS - Planta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f8; }
+
+        .card-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- 🔹 HEADER -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4">
+
+    <span class="navbar-brand">📦 LMCS</span>
+
+    <div class="ms-4">
+        <a href="/recibos" class="me-3 text-decoration-none">
+            Recibos
+        </a>
+
+        <a href="/planta" class="me-3 text-decoration-none fw-bold border-bottom border-primary pb-1">
+            Planta
+        </a>
+    </div>
+
+    <div class="ms-auto d-flex align-items-center">
+        <span class="me-3 text-muted">
+            👤 {{ session["usuario"] }}
+        </span>
+
+        <a href="/logout" class="btn btn-outline-danger btn-sm">
+            Cerrar sesión
+        </a>
+    </div>
+
+</nav>
+
+<div class="container mt-4">
+
+    <a href="/recibos" class="btn btn-secondary mb-3">⬅ Volver</a>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="row">
+
+        <!-- 🔵 ENVIAR A PLANTA -->
+        <div class="col-md-6">
+            <div class="card-box">
+                <h4>📤 Enviar a Planta</h4>
+
+                <form method="POST">
+                    <input type="hidden" name="tipo" value="enviar">
+
+                    <label class="form-label mt-3">IDs (separados por coma)</label>
+                    <input type="text" name="ids" class="form-control" placeholder="1,2,3">
+
+                    <button class="btn btn-primary mt-3 w-100">
+                        Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 🟢 RECIBIR DE PLANTA -->
+        <div class="col-md-6">
+            <div class="card-box">
+                <h4>📥 Recibir de Planta</h4>
+
+                <form method="POST">
+                    <input type="hidden" name="tipo" value="recibir">
+
+                    <label class="form-label mt-3">IDs (separados por coma)</label>
+                    <input type="text" name="ids" class="form-control" placeholder="1,2,3">
+
+                    <button class="btn btn-success mt-3 w-100">
+                        Recibir
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
