@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LMCS - Recibos</title>
+
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
     <style>
         body { background-color: #f4f6f8; }
 
@@ -31,7 +36,21 @@
         .recibido { background: #f8d7da; color: #842029; }   
         .planta { background: #fff3cd; color: #664d03; }   
         .listo { background: #cfe2ff; color: #084298; }      
-        .entregado { background: #d1e7dd; color: #0f5132; } 
+        .entregado { background: #d1e7dd; color: #0f5132; }
+
+        /* 🔥 Scroll horizontal en móvil */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        /* 🔔 badge notificación */
+        .badge-noti {
+            position: absolute;
+            top: 0;
+            right: 0;
+            transform: translate(50%, -50%);
+            font-size: 0.6rem;
+        }
     </style>
 </head>
 
@@ -54,8 +73,39 @@
         {% endif %}
     </div>
 
-    <div class="ms-auto d-flex align-items-center">
-        <span class="me-3 text-muted">
+    <div class="ms-auto d-flex align-items-center gap-3">
+
+        <!-- 🔔 NOTIFICACIONES -->
+        <div class="dropdown">
+            <button class="btn btn-light position-relative" data-bs-toggle="dropdown">
+                <i class="bi bi-bell fs-5"></i>
+
+                {% if session.get('notificaciones') %}
+                <span class="badge bg-danger badge-noti">
+                    {{ session['notificaciones']|length }}
+                </span>
+                {% endif %}
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header">Notificaciones</li>
+
+                {% if session.get('notificaciones') %}
+                    {% for n in session['notificaciones'] %}
+                    <li>
+                        <span class="dropdown-item small">
+                            {{ n }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                    <li><span class="dropdown-item text-muted">Sin notificaciones</span></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- 👤 USER -->
+        <span class="text-muted">
             👤 {{ session["usuario"] }}
         </span>
 
@@ -102,7 +152,6 @@
                 </select>
             </div>
 
-            <!-- 🔹 BOTONES -->
             <div class="col-12 text-end">
                 <button type="submit" class="btn btn-primary">Filtrar</button>
                 <a href="/recibos" class="btn btn-secondary">Limpiar</a>
@@ -120,57 +169,63 @@
         <a href="/nuevo" class="btn btn-success">Nuevo Recibo</a>
     </div>
 
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th># Recibo</th>
-                <th>Ingreso</th>
-                <th>Salida</th>
-                <th>Total</th>
-                <th>Cliente</th>
-                <th>Teléfono</th> 
-                <th>Estado</th>
-                <th>Paquete</th> 
-                
-            </tr>
-        </thead>
+    <!-- 🔥 RESPONSIVE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Ingreso</th>
+                    <th>Salida</th>
+                    <th>Total</th>
+                    <th>Cliente</th>
+                    <th>Teléfono</th> 
+                    <th>Estado</th>
+                    <th>Paquete</th> 
+                </tr>
+            </thead>
 
-        <tbody>
-            {% for r in recibos %}
-            <tr onclick="window.location='/recibo/{{ r[0] }}'" style="cursor:pointer;">
-                <td>{{ r[0] }}</td>
+            <tbody>
+                {% for r in recibos %}
+                <tr onclick="window.location='/recibo/{{ r[0] }}'" style="cursor:pointer;">
+                    <td>{{ r[0] }}</td>
 
-                <td>{{ r[1].strftime('%m-%d-%y') }}</td>
-                <td>{{ r[2].strftime('%m-%d-%y') if r[2] else '' }}</td>
+                    <td>{{ r[1].strftime('%m-%d-%y') }}</td>
+                    <td>{{ r[2].strftime('%m-%d-%y') if r[2] else '' }}</td>
 
-                <td>${{ "{:,.0f}".format(r[3]) }}</td>
-                <td>{{ r[4] }}</td>
-                <td>{{ r[5] }}</td>
+                    <td>${{ "{:,.0f}".format(r[3]) }}</td>
+                    <td>{{ r[4] }}</td>
+                    <td>{{ r[5] }}</td>
 
-                <td>
-                    {% set estado = r[7]|lower %}
+                    <td>
+                        {% set estado = r[7]|lower %}
 
-                    {% if estado == 'recibido' %}
-                        <span class="estado recibido">Recibido</span>
-                    {% elif estado == 'en planta' %}
-                        <span class="estado planta">En Planta</span>
-                    {% elif estado == 'listo' %}
-                        <span class="estado listo">Listo</span>
-                    {% elif estado == 'entregado' %}
-                        <span class="estado entregado">Entregado</span>
-                    {% else %}
-                        <span class="estado">{{ r[7] }}</span>
-                    {% endif %}
-                </td>
+                        {% if estado == 'recibido' %}
+                            <span class="estado recibido">Recibido</span>
+                        {% elif estado == 'en planta' %}
+                            <span class="estado planta">En Planta</span>
+                        {% elif estado == 'listo' %}
+                            <span class="estado listo">Listo</span>
+                        {% elif estado == 'entregado' %}
+                            <span class="estado entregado">Entregado</span>
+                        {% else %}
+                            <span class="estado">{{ r[7] }}</span>
+                        {% endif %}
+                    </td>
 
-                <td>{{ r[6] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <td>{{ r[6] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 </div>
 
 </div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

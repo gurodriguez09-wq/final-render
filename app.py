@@ -21,6 +21,16 @@ def get_connection():
         password="1234"
     )
 
+# 🔔 NOTIFICACIONES (SIN BD)
+def agregar_notificacion(mensaje):
+    if "notificaciones" not in session:
+        session["notificaciones"] = []
+
+    session["notificaciones"].insert(0, mensaje)
+
+    # máximo 5
+    session["notificaciones"] = session["notificaciones"][:5]
+
 # 🔥 QUERY BASE
 BASE_RECIBO_QUERY = """
     SELECT 
@@ -122,7 +132,12 @@ def index():
     cur.close()
     conn.close()
 
-    return render_template("recibos.html", recibos=recibos, rol=session["rol"])
+    return render_template(
+        "recibos.html",
+        recibos=recibos,
+        rol=session["rol"],
+        notificaciones=session.get("notificaciones", [])
+    )
 
 # ---------------- DETALLE ----------------
 @app.route("/recibo/<int:id>")
@@ -174,6 +189,8 @@ def eliminar_recibo(id):
     conn.commit()
     cur.close()
     conn.close()
+
+    agregar_notificacion(f"🗑️ Recibo #{id} eliminado")
 
     return redirect(url_for("index"))
 
@@ -229,7 +246,6 @@ def entregar_recibo(id):
             error="Solo puedes entregar prendas en estado 'listo'"
         )
 
-    # id 4 = entregado
     estado_entregado = 4
 
     cur.execute("""
@@ -241,6 +257,8 @@ def entregar_recibo(id):
     conn.commit()
     cur.close()
     conn.close()
+
+    agregar_notificacion(f"📦 Recibo #{id} entregado")
 
     return redirect(url_for("detalle_recibo", id=id))
 
@@ -292,7 +310,6 @@ def planta():
                     error=f"No puedes pasar el recibo {rid} de '{actual}' a '{nuevo}'"
                 )
 
-        # 🔥 IDs fijos
         estado = 2 if tipo == "enviar" else 3
 
         cur.execute("""
@@ -304,6 +321,18 @@ def planta():
         conn.commit()
         cur.close()
         conn.close()
+
+        if len(lista_ids) == 1:
+            ids_texto = f"#{lista_ids[0]}"
+        else:
+            ids_texto = "#" + ", #".join(map(str, lista_ids))
+
+        if tipo == "enviar":
+            mensaje = f"🏭 Recibo(s) {ids_texto} enviado(s) a planta"
+        else:
+            mensaje = f"📤 Recibo(s) {ids_texto} listo(s) para entrega"
+
+        agregar_notificacion(mensaje)
 
         return redirect(url_for("planta"))
 
@@ -330,33 +359,16 @@ def nuevo():
         telefono = request.form["telefono_cliente"]
         paquete = request.form["paquete"]
 
-        # 🔥 estado fijo → recibido
         id_estado = 1
 
         if not all([fecha_ingreso, fecha_salida, valor_total, nombre_cliente, telefono, paquete]):
             return render_template("nuevo.html", error="Todos los campos son obligatorios")
 
-        hoy = datetime.now().date()
-        fecha_ingreso_dt = datetime.strptime(fecha_ingreso, "%Y-%m-%d").date()
-
-        if fecha_ingreso_dt != hoy:
-            return render_template("nuevo.html", error="La fecha debe ser hoy")
-
-        fecha_salida_dt = datetime.strptime(fecha_salida, "%Y-%m-%d").date()
-
-        if fecha_salida_dt < fecha_ingreso_dt:
-            return render_template("nuevo.html", error="Fecha inválida")
-
-        if not valor_total.isdigit():
-            return render_template("nuevo.html", error="Valor inválido")
-
-        if not telefono.isdigit():
-            return render_template("nuevo.html", error="Teléfono inválido")
-
         cur.execute("""
             INSERT INTO recibo 
             (fecha_ingreso, fecha_salida, valor_total, nombre_cliente, telefono_cliente, paquete, id_estado)
-            VALUES (%s, %s, %s, %s, %s, %s, %s);
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id_recibo;
         """, (
             fecha_ingreso,
             fecha_salida,
@@ -367,17 +379,19 @@ def nuevo():
             id_estado
         ))
 
+        nuevo_id = cur.fetchone()[0]
+
         conn.commit()
         cur.close()
         conn.close()
 
-        return redirect(url_for("index"))
+        agregar_notificacion(f"📥 Recibo #{nuevo_id} registrado")
 
-    cur.close()
-    conn.close()
+        return redirect(url_for("index"))
 
     return render_template("nuevo.html")
 
+# ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.clear()
