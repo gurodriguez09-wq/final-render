@@ -19,24 +19,12 @@ app.secret_key = "clave_secreta"
 
 # 🔹 conexión BD (LOCAL + RENDER)
 def get_connection():
-    DATABASE_URL = os.environ.get("DATABASE_URL")
+    url = os.environ.get("DATABASE_URL")
 
-    if DATABASE_URL:
-        url = urlparse(DATABASE_URL)
-        return psycopg2.connect(
-            host=url.hostname,
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            port=url.port
-        )
-    else:
-        return psycopg2.connect(
-            host="localhost",
-            database="lcms01",
-            user="postgres",
-            password="1234"
-        )
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+
+    return psycopg2.connect(url)
 
 # 🔔 NOTIFICACIONES (SIN BD)
 def agregar_notificacion(mensaje):
