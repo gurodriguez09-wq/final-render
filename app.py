@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 import locale
 from datetime import datetime
+import os
+from urllib.parse import urlparse
 
 # 🔹 idioma fechas
 try:
@@ -12,14 +14,26 @@ except:
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
 
-# 🔹 conexión BD
+# 🔹 conexión BD (LOCAL + RENDER)
 def get_connection():
-    return psycopg2.connect(
-        host="localhost",
-        database="lcms01",
-        user="postgres",
-        password="1234"
-    )
+    DATABASE_URL = os.environ.get("DATABASE_URL")
+
+    if DATABASE_URL:
+        url = urlparse(DATABASE_URL)
+        return psycopg2.connect(
+            host=url.hostname,
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            port=url.port
+        )
+    else:
+        return psycopg2.connect(
+            host="localhost",
+            database="lcms01",
+            user="postgres",
+            password="1234"
+        )
 
 # 🔔 NOTIFICACIONES (SIN BD)
 def agregar_notificacion(mensaje):
@@ -27,8 +41,6 @@ def agregar_notificacion(mensaje):
         session["notificaciones"] = []
 
     session["notificaciones"].insert(0, mensaje)
-
-    # máximo 5
     session["notificaciones"] = session["notificaciones"][:5]
 
 # 🔥 QUERY BASE
@@ -398,4 +410,4 @@ def logout():
     return redirect(url_for("login"))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
