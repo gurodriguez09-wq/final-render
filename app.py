@@ -9,7 +9,10 @@ from urllib.parse import urlparse
 try:
     locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 except:
-    locale.setlocale(locale.LC_TIME, 'Spanish_Spain')
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_CO.UTF-8')
+    except:
+        locale.setlocale(locale.LC_TIME, 'C')
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta"
